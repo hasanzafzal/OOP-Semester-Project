@@ -1,3 +1,5 @@
+package com.example.demo;
+
 import java.util.*;
 
 class Vehicle {
@@ -138,14 +140,22 @@ class ParkingManagementSystem {
             if (!slot.isOccupied()) {
                 slot.occupy();
                 System.out.println("Vehicle registered in " + slot.getSlotType());
-                Scanner scanner = new Scanner(System.in);
-                System.out.print("Enter the duration of parking in hours: ");
-                long duration = scanner.nextLong();
-                double fee = vehicle.calculateFee(duration);
-                totalRevenue += fee;
-                Ticket ticket = new Ticket(++totalVehicles, getCurrentTime(), vehicle);
-                tickets.add(ticket);
-                System.out.println("Parking Fee: $" + fee);
+                try (Scanner scanner = new Scanner(System.in)) {
+                    System.out.print("Enter the duration of parking in hours: ");
+                    long duration = scanner.nextLong();
+                    if (duration <= 0) {
+                        throw new IllegalArgumentException("Duration must be positive.");
+                    }
+                    double fee = vehicle.calculateFee(duration);
+                    totalRevenue += fee;
+                    Ticket ticket = new Ticket(++totalVehicles, getCurrentTime(), vehicle);
+                    tickets.add(ticket);
+                    System.out.println("Parking Fee: $" + fee);
+                } catch (InputMismatchException e) {
+                    System.out.println("Invalid input. Please enter a valid number for duration.");
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
                 return;
             }
         }
@@ -178,69 +188,76 @@ public class Main {
         ParkingManagementSystem pms = new ParkingManagementSystem();
 
         while (true) {
-            System.out.println("1. Register Vehicle");
-            System.out.println("2. Display Slots");
-            System.out.println("3. Generate Report");
-            System.out.println("4. Notify Time Alerts");
-            System.out.println("5. Exit");
-            System.out.print("Choose an option: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine();
+            try {
+                System.out.println("1. Register Vehicle");
+                System.out.println("2. Display Slots");
+                System.out.println("3. Generate Report");
+                System.out.println("4. Notify Time Alerts");
+                System.out.println("5. Exit");
+                System.out.print("Choose an option: ");
+                int choice = scanner.nextInt();
+                scanner.nextLine();
 
-            switch (choice) {
-                case 1:
-                    System.out.println("Enter the vehicle number: ");
-                    String vehicleNum = scanner.nextLine();
-                    System.out.println("Enter the owner name: ");
-                    String ownerName = scanner.nextLine();
-                    System.out.println("Enter the contact number: ");
-                    long contactNum = scanner.nextLong();
-                    scanner.nextLine();
-                    System.out.println("Enter the vehicle type (4 wheeler/2 wheeler): ");
-                    String vehicleType = scanner.nextLine();
-                    Vehicle vehicle;
+                switch (choice) {
+                    case 1:
+                        System.out.println("Enter the vehicle number: ");
+                        String vehicleNum = scanner.nextLine();
+                        System.out.println("Enter the owner name: ");
+                        String ownerName = scanner.nextLine();
+                        System.out.println("Enter the contact number: ");
+                        long contactNum = scanner.nextLong();
+                        scanner.nextLine();
+                        System.out.println("Enter the vehicle type (4 wheeler/2 wheeler): ");
+                        String vehicleType = scanner.nextLine();
+                        Vehicle vehicle;
 
-                    if (vehicleType.equalsIgnoreCase("4 wheeler") || vehicleType.equals("4")) {
-                        System.out.println("Enter the vehicle type (LTV/HTV): ");
-                        String type = scanner.nextLine();
-                        vehicle = new FourWheeler(vehicleNum, ownerName, contactNum, type);
-                    } else if (vehicleType.equalsIgnoreCase("2 wheeler") || vehicleType.equals("2")) {
-                        System.out.println("Does the 2 wheeler have a carrier? (true/false): ");
-                        String carrierInput = scanner.nextLine().trim().toLowerCase();
-                        boolean hasCarrier;
+                        if (vehicleType.equalsIgnoreCase("4 wheeler") || vehicleType.equals("4")) {
+                            System.out.println("Enter the vehicle type (LTV/HTV): ");
+                            String type = scanner.nextLine();
+                            vehicle = new FourWheeler(vehicleNum, ownerName, contactNum, type);
+                        } else if (vehicleType.equalsIgnoreCase("2 wheeler") || vehicleType.equals("2")) {
+                            System.out.println("Does the 2 wheeler have a carrier? (true/false): ");
+                            String carrierInput = scanner.nextLine().trim().toLowerCase();
+                            boolean hasCarrier;
 
-                        if (carrierInput.equals("true") || carrierInput.equals("t")) {
-                            hasCarrier = true;
-                        } else if (carrierInput.equals("false") || carrierInput.equals("f")) {
-                            hasCarrier = false;
+                            if (carrierInput.equals("true") || carrierInput.equals("t")) {
+                                hasCarrier = true;
+                            } else if (carrierInput.equals("false") || carrierInput.equals("f")) {
+                                hasCarrier = false;
+                            } else {
+                                throw new IllegalArgumentException("Invalid input for carrier. Please enter 'true', 'false', 't', or 'f'.");
+                            }
+
+                            vehicle = new TwoWheeler(vehicleNum, ownerName, contactNum, hasCarrier);
                         } else {
-                            System.out.println("Invalid input for carrier. Please enter 'true', 'false', 't', or 'f'.");
-                            continue;
+                            throw new IllegalArgumentException("Invalid vehicle type.");
                         }
 
-                        vehicle = new TwoWheeler(vehicleNum, ownerName, contactNum, hasCarrier);
-                    } else {
-                        System.out.println("Invalid vehicle type. Exiting...");
-                        continue;
-                    }
-
-                    pms.registerVehicle(vehicle);
-                    break;
-                case 2:
-                    pms.displaySlots();
-                    break;
-                case 3:
-                    pms.generateReport();
-                    break;
-                case 4:
-                    pms.notifyTimeAlerts();
-                    break;
-                case 5:
-                    System.out.println("Exiting...");
-                    scanner.close();
-                    return;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
+                        pms.registerVehicle(vehicle);
+                        break;
+                    case 2:
+                        pms.displaySlots();
+                        break;
+                    case 3:
+                        pms.generateReport();
+                        break;
+                    case 4:
+                        pms.notifyTimeAlerts();
+                        break;
+                    case 5:
+                        System.out.println("Exiting...");
+                        scanner.close();
+                        return;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+                scanner.nextLine(); // Clear the invalid input
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
             }
         }
     }
