@@ -4,7 +4,7 @@
 <?import javafx.scene.text.*?>
 
 <AnchorPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/16"
-            fx:controller="com.example.oopfrontproject.Controller" prefHeight="600.0" prefWidth="800.0">
+            fx:controller="com.example.oopfrontproject.MainController" prefHeight="600.0" prefWidth="800.0">
     <children>
         <!-- Title -->
         <Label text="Parking Management System" layoutX="250.0" layoutY="10.0">
@@ -21,23 +21,23 @@
             <TextField fx:id="contactNumberField" promptText="Contact Number" />
             <HBox spacing="10.0">
                 <ComboBox fx:id="vehicleTypeComboBox" promptText="Vehicle Type" />
-                <CheckBox fx:id="carrierCheckBox" text="Has Carrier" />
+                <CheckBox fx:id="hasCarrierCheckBox" text="Has Carrier" />
             </HBox>
-            <Button fx:id="registerVehicleButton" text="Register Vehicle" />
+            <Button fx:id="registerVehicleButton" text="Register Vehicle" onAction="#handleRegisterVehicle" />
         </VBox>
 
         <!-- Actions -->
         <VBox layoutX="400.0" layoutY="50.0" spacing="10.0">
             <Label text="Actions" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-            <Button fx:id="viewSlotsButton" text="View Parking Slots" />
-            <Button fx:id="generateReportButton" text="Generate Report" />
-            <Button fx:id="timeAlertButton" text="Send Time Alerts" />
+            <Button fx:id="viewSlotsButton" text="View Parking Slots" onAction="#handleDisplaySlots" />
+            <Button fx:id="generateReportButton" text="Generate Report" onAction="#handleGenerateReport" />
+            <Button fx:id="timeAlertButton" text="Send Time Alerts" onAction="#handleNotifyAlerts" />
         </VBox>
 
         <!-- Output Section -->
         <VBox layoutX="50.0" layoutY="250.0" prefWidth="700.0" spacing="10.0">
             <Label text="Output" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-            <TextArea fx:id="outputTextArea" prefHeight="200.0" prefWidth="700.0" wrapText="true" editable="false" />
+            <TextArea fx:id="outputArea" prefHeight="200.0" prefWidth="700.0" wrapText="true" editable="false" />
         </VBox>
 
         <!-- Parking Slots Table -->

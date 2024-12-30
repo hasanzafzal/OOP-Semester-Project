@@ -1,12 +1,13 @@
 package com.example.oopfrontproject;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
 import javafx.beans.property.SimpleStringProperty;
-
-import java.util.Scanner;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class Controller {
 
@@ -19,23 +20,18 @@ public class Controller {
     @FXML
     private TextArea outputTextArea;
     @FXML
-    private TableView<ParkingSlot> slotsTable;
+    private TableView<Main.ParkingSlot> slotsTable;
     @FXML
-    private TableColumn<ParkingSlot, String> slotColumn, statusColumn;
+    private TableColumn<Main.ParkingSlot, String> slotColumn, statusColumn;
 
-    private ParkingManagementSystem parkingSystem;
+    private Main.ParkingManagementSystem parkingSystem = new Main.ParkingManagementSystem();
 
     public void initialize() {
-        parkingSystem = new ParkingManagementSystem();
-
-        // Initialize ComboBox with vehicle types
         vehicleTypeComboBox.setItems(FXCollections.observableArrayList("Two Wheeler", "Four Wheeler"));
 
-        // Set up the TableView for slots
         slotColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSlotType()));
         statusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().isOccupied() ? "Occupied" : "Available"));
 
-        // Load slots into TableView
         refreshSlotTable();
     }
 
@@ -47,7 +43,6 @@ public class Controller {
         String vehicleType = vehicleTypeComboBox.getValue();
         boolean hasCarrier = carrierCheckBox.isSelected();
 
-        // Validation checks
         if (vehicleNum.isEmpty() || ownerName.isEmpty() || contactNum.isEmpty() || vehicleType == null) {
             outputTextArea.appendText("Please fill in all fields.\n");
             return;
@@ -55,47 +50,54 @@ public class Controller {
 
         try {
             long contactNumber = Long.parseLong(contactNum);
-            Vehicle vehicle;
+            Main.Vehicle vehicle;
 
             if (vehicleType.equals("Two Wheeler")) {
-                vehicle = new TwoWheeler(vehicleNum, ownerName, contactNumber, hasCarrier);
+                vehicle = new Main.TwoWheeler(vehicleNum, ownerName, contactNumber, hasCarrier);
             } else {
-                vehicle = new FourWheeler(vehicleNum, ownerName, contactNumber, "Sedan");
+                vehicle = new Main.FourWheeler(vehicleNum, ownerName, contactNumber, "Sedan"); // or get the type from input
             }
 
-            // Register vehicle in the parking system
             parkingSystem.registerVehicle(vehicle);
             outputTextArea.appendText("Vehicle registered: " + vehicle.getVehicleNum() + "\n");
-
-            // Refresh the parking slots view
             refreshSlotTable();
+
         } catch (NumberFormatException e) {
-            outputTextArea.appendText("Invalid contact number. Please enter a valid number.\n");
+            outputTextArea.appendText("Invalid contact number.\n");
         }
     }
 
     @FXML
     private void viewSlots() {
-        outputTextArea.appendText("Displaying all parking slots...\n");
-        for (ParkingSlot slot : parkingSystem.getSlots()) {
-            outputTextArea.appendText(slot.getSlotType() + " - " + (slot.isOccupied() ? "Occupied" : "Available") + "\n");
-        }
+        outputTextArea.appendText("Displaying parking slots...\n");
+        refreshSlotTable();
     }
 
     @FXML
     private void generateReport() {
-        outputTextArea.appendText("Generating report...\n");
         parkingSystem.generateReport();
     }
 
     @FXML
     private void sendTimeAlerts() {
-        outputTextArea.appendText("Sending time alerts...\n");
-        parkingSystem.notifyTimeAlerts();
+        // Implement time alert functionality in Main.ParkingManagementSystem
+        outputTextArea.appendText("Time alerts functionality is not yet implemented.\n");
+        // parkingSystem.notifyTimeAlerts(); // Call the method once implemented
     }
 
     private void refreshSlotTable() {
-        ObservableList<ParkingSlot> slotList = FXCollections.observableArrayList(parkingSystem.getSlots());
-        slotsTable.setItems(slotList);
+        try {
+            List<Main.ParkingSlot> slotList = parkingSystem.getAvailableSlots();
+            ObservableList<Main.ParkingSlot> observableSlots = FXCollections.observableArrayList(slotList);
+            slotsTable.setItems(observableSlots);
+        } catch (Exception e) {
+            outputTextArea.appendText("Error refreshing parking slots: " + e.getMessage() + "\n");
+            e.printStackTrace();
+        }
+    }
+
+    private String getCurrentTime() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return LocalDateTime.now().format(formatter);
     }
 }

@@ -3,65 +3,89 @@ package com.example.oopfrontproject;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import java.util.List;
+
+import com.example.oopfrontproject.Main.ParkingManagementSystem;
+import com.example.oopfrontproject.Main.Vehicle;
+import com.example.oopfrontproject.Main.FourWheeler;
+import com.example.oopfrontproject.Main.TwoWheeler;
 
 public class MainController {
+
     @FXML
     private TextField vehicleNumberField;
+
     @FXML
     private TextField ownerNameField;
+
     @FXML
     private TextField contactNumberField;
+
     @FXML
-    private TextField vehicleTypeField;
+    private ComboBox<String> vehicleTypeComboBox;
+
     @FXML
     private CheckBox hasCarrierCheckBox;
+
     @FXML
     private TextArea outputArea;
+
     private ParkingManagementSystem pms;
+
     public MainController() {
         pms = new ParkingManagementSystem();
     }
+
     @FXML
-    public void initialize() {  }
+    public void initialize() {
+        // Populate the vehicle type combo box
+        vehicleTypeComboBox.getItems().addAll("FourWheeler", "TwoWheeler");
+    }
+
     @FXML
     private void handleRegisterVehicle(ActionEvent event) {
         try {
             String vehicleNum = vehicleNumberField.getText();
             String ownerName = ownerNameField.getText();
             long contactNum = Long.parseLong(contactNumberField.getText());
-            if (vehicleNum.isEmpty() || ownerName.isEmpty() || contactNum <= 0) {
+
+            if (vehicleNum.isEmpty() || ownerName.isEmpty()) {
                 outputArea.setText("Please fill all the fields correctly.");
                 return;
             }
+
             Vehicle vehicle;
-            String vehicleType = vehicleTypeField.getText();
+            String vehicleType = vehicleTypeComboBox.getValue();
             boolean hasCarrier = hasCarrierCheckBox.isSelected();
-            if (vehicleTypeField.getText().equalsIgnoreCase("FourWheeler")) {
+
+            if ("FourWheeler".equalsIgnoreCase(vehicleType)) {
                 vehicle = new FourWheeler(vehicleNum, ownerName, contactNum, vehicleType);
-            } else {
+            } else if ("TwoWheeler".equalsIgnoreCase(vehicleType)) {
                 vehicle = new TwoWheeler(vehicleNum, ownerName, contactNum, hasCarrier);
+            } else {
+                outputArea.setText("Please select a valid vehicle type.");
+                return;
             }
+
             pms.registerVehicle(vehicle);
-            outputArea.setText("Vehicle Registered Successfully.\n");
-            pms.displaySlots();
+            outputArea.appendText("Vehicle Registered Successfully.\n");
         } catch (NumberFormatException e) {
             outputArea.setText("Please enter a valid contact number.");
         }
     }
+
     @FXML
     private void handleGenerateReport(ActionEvent event) {
-        outputArea.setText("Generating Report...\n");
+        outputArea.appendText("Generating Report...\n");
         pms.generateReport();
     }
+
     @FXML
     private void handleDisplaySlots(ActionEvent event) {
-        outputArea.setText("Displaying Available Parking Slots...\n");
-        pms.displaySlots();
+        outputArea.appendText("This feature is not available currently.\n");
     }
+
     @FXML
     private void handleNotifyAlerts(ActionEvent event) {
-        outputArea.setText("Checking for Time Alerts...\n");
-        pms.notifyTimeAlerts();
+        outputArea.appendText("This feature is not available currently.\n");
     }
 }
