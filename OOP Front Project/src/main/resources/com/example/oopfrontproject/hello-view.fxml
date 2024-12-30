@@ -1,16 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-        <?import javafx.geometry.Insets?>
-        <?import javafx.scene.control.Label?>
-        <?import javafx.scene.layout.VBox?>
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/16"
+            fx:controller="com.example.oopfrontproject.Controller" prefHeight="600.0" prefWidth="800.0">
+    <children>
+        <!-- Title -->
+        <Label text="Parking Management System" layoutX="250.0" layoutY="10.0">
+            <font>
+                <Font size="24.0" />
+            </font>
+        </Label>
 
-        <?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.oopfrontproject.HelloController">
-<padding>
-    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-</padding>
+        <!-- Input Section -->
+        <VBox layoutX="50.0" layoutY="50.0" spacing="10.0">
+            <Label text="Register Vehicle" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <TextField fx:id="vehicleNumberField" promptText="Vehicle Number" />
+            <TextField fx:id="ownerNameField" promptText="Owner Name" />
+            <TextField fx:id="contactNumberField" promptText="Contact Number" />
+            <HBox spacing="10.0">
+                <ComboBox fx:id="vehicleTypeComboBox" promptText="Vehicle Type" />
+                <CheckBox fx:id="carrierCheckBox" text="Has Carrier" />
+            </HBox>
+            <Button fx:id="registerVehicleButton" text="Register Vehicle" />
+        </VBox>
 
-<Label fx:id="welcomeText"/>
-<Button text="Hello!" onAction="#onHelloButtonClick"/>
-</VBox>
+        <!-- Actions -->
+        <VBox layoutX="400.0" layoutY="50.0" spacing="10.0">
+            <Label text="Actions" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <Button fx:id="viewSlotsButton" text="View Parking Slots" />
+            <Button fx:id="generateReportButton" text="Generate Report" />
+            <Button fx:id="timeAlertButton" text="Send Time Alerts" />
+        </VBox>
+
+        <!-- Output Section -->
+        <VBox layoutX="50.0" layoutY="250.0" prefWidth="700.0" spacing="10.0">
+            <Label text="Output" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <TextArea fx:id="outputTextArea" prefHeight="200.0" prefWidth="700.0" wrapText="true" editable="false" />
+        </VBox>
+
+        <!-- Parking Slots Table -->
+        <VBox layoutX="50.0" layoutY="480.0" prefWidth="700.0">
+            <Label text="Parking Slots" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <TableView fx:id="slotsTable" prefHeight="150.0" prefWidth="700.0">
+                <columns>
+                    <TableColumn text="Slot" fx:id="slotColumn" prefWidth="350.0" />
+                    <TableColumn text="Status" fx:id="statusColumn" prefWidth="350.0" />
+                </columns>
+            </TableView>
+        </VBox>
+    </children>
+</AnchorPane>
