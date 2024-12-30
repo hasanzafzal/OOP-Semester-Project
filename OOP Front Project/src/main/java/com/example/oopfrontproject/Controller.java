@@ -1,10 +1,15 @@
 package com.example.oopfrontproject;
 
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.beans.property.SimpleStringProperty;
+
+import java.util.Scanner;
 
 public class Controller {
+
     @FXML
     private TextField vehicleNumberField, ownerNameField, contactNumberField;
     @FXML
@@ -18,13 +23,20 @@ public class Controller {
     @FXML
     private TableColumn<ParkingSlot, String> slotColumn, statusColumn;
 
+    private ParkingManagementSystem parkingSystem;
+
     public void initialize() {
-        // Initialize ComboBox
+        parkingSystem = new ParkingManagementSystem();
+
+        // Initialize ComboBox with vehicle types
         vehicleTypeComboBox.setItems(FXCollections.observableArrayList("Two Wheeler", "Four Wheeler"));
 
-        // Add Parking Slots to Table
-        slotColumn.setCellValueFactory(data -> data.getValue().getSlotTypeProperty());
-        statusColumn.setCellValueFactory(data -> data.getValue().getIsOccupiedProperty());
+        // Set up the TableView for slots
+        slotColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSlotType()));
+        statusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().isOccupied() ? "Occupied" : "Available"));
+
+        // Load slots into TableView
+        refreshSlotTable();
     }
 
     @FXML
@@ -35,37 +47,55 @@ public class Controller {
         String vehicleType = vehicleTypeComboBox.getValue();
         boolean hasCarrier = carrierCheckBox.isSelected();
 
+        // Validation checks
         if (vehicleNum.isEmpty() || ownerName.isEmpty() || contactNum.isEmpty() || vehicleType == null) {
-            outputTextArea.appendText("Please fill all required fields.\n");
+            outputTextArea.appendText("Please fill in all fields.\n");
             return;
         }
 
-        Vehicle vehicle;
-        if (vehicleType.equals("Two Wheeler")) {
-            vehicle = new TwoWheeler(vehicleNum, ownerName, Long.parseLong(contactNum), hasCarrier);
-        } else {
-            vehicle = new FourWheeler(vehicleNum, ownerName, Long.parseLong(contactNum), "Sedan");
-        }
+        try {
+            long contactNumber = Long.parseLong(contactNum);
+            Vehicle vehicle;
 
-        // Simulate parking registration
-        outputTextArea.appendText("Vehicle Registered: " + vehicle.getVehicleNum() + "\n");
+            if (vehicleType.equals("Two Wheeler")) {
+                vehicle = new TwoWheeler(vehicleNum, ownerName, contactNumber, hasCarrier);
+            } else {
+                vehicle = new FourWheeler(vehicleNum, ownerName, contactNumber, "Sedan");
+            }
+
+            // Register vehicle in the parking system
+            parkingSystem.registerVehicle(vehicle);
+            outputTextArea.appendText("Vehicle registered: " + vehicle.getVehicleNum() + "\n");
+
+            // Refresh the parking slots view
+            refreshSlotTable();
+        } catch (NumberFormatException e) {
+            outputTextArea.appendText("Invalid contact number. Please enter a valid number.\n");
+        }
     }
 
     @FXML
     private void viewSlots() {
-        // Simulate viewing slots
         outputTextArea.appendText("Displaying all parking slots...\n");
+        for (ParkingSlot slot : parkingSystem.getSlots()) {
+            outputTextArea.appendText(slot.getSlotType() + " - " + (slot.isOccupied() ? "Occupied" : "Available") + "\n");
+        }
     }
 
     @FXML
     private void generateReport() {
-        // Simulate generating report
         outputTextArea.appendText("Generating report...\n");
+        parkingSystem.generateReport();
     }
 
     @FXML
     private void sendTimeAlerts() {
-        // Simulate sending time alerts
-        outputTextArea.appendText("Time alerts sent to all vehicles.\n");
+        outputTextArea.appendText("Sending time alerts...\n");
+        parkingSystem.notifyTimeAlerts();
+    }
+
+    private void refreshSlotTable() {
+        ObservableList<ParkingSlot> slotList = FXCollections.observableArrayList(parkingSystem.getSlots());
+        slotsTable.setItems(slotList);
     }
 }

@@ -177,9 +177,14 @@ class ParkingManagementSystem {
                 } catch (IllegalArgumentException e) {
                     System.out.println("Error: " + e.getMessage());
                 }
+                return;
             }
         }
         System.out.println("No available slots for the vehicle.");
+    }
+
+    public List<ParkingSlot> getSlots() {
+        return slots;
     }
 
     public void displaySlots() {
