@@ -1,5 +1,3 @@
-package com.example.demo;
-
 import java.util.*;
 
 class Vehicle {
@@ -135,27 +133,19 @@ class ParkingManagementSystem {
         }
     }
 
-    public void registerVehicle(Vehicle vehicle) {
+    public void registerVehicle(Vehicle vehicle, long duration) {
         for (ParkingSlot slot : slots) {
             if (!slot.isOccupied()) {
                 slot.occupy();
                 System.out.println("Vehicle registered in " + slot.getSlotType());
-                try (Scanner scanner = new Scanner(System.in)) {
-                    System.out.print("Enter the duration of parking in hours: ");
-                    long duration = scanner.nextLong();
-                    if (duration <= 0) {
-                        throw new IllegalArgumentException("Duration must be positive.");
-                    }
-                    double fee = vehicle.calculateFee(duration);
-                    totalRevenue += fee;
-                    Ticket ticket = new Ticket(++totalVehicles, getCurrentTime(), vehicle);
-                    tickets.add(ticket);
-                    System.out.println("Parking Fee: $" + fee);
-                } catch (InputMismatchException e) {
-                    System.out.println("Invalid input. Please enter a valid number for duration.");
-                } catch (IllegalArgumentException e) {
-                    System.out.println("Error: " + e.getMessage());
+                if (duration <= 0) {
+                    throw new IllegalArgumentException("Duration must be positive.");
                 }
+                double fee = vehicle.calculateFee(duration);
+                totalRevenue += fee;
+                Ticket ticket = new Ticket(++totalVehicles, getCurrentTime(), vehicle);
+                tickets.add(ticket);
+                System.out.println("Parking Fee: $" + fee);
                 return;
             }
         }
@@ -217,23 +207,16 @@ public class Main {
                             vehicle = new FourWheeler(vehicleNum, ownerName, contactNum, type);
                         } else if (vehicleType.equalsIgnoreCase("2 wheeler") || vehicleType.equals("2")) {
                             System.out.println("Does the 2 wheeler have a carrier? (true/false): ");
-                            String carrierInput = scanner.nextLine().trim().toLowerCase();
-                            boolean hasCarrier;
-
-                            if (carrierInput.equals("true") || carrierInput.equals("t")) {
-                                hasCarrier = true;
-                            } else if (carrierInput.equals("false") || carrierInput.equals("f")) {
-                                hasCarrier = false;
-                            } else {
-                                throw new IllegalArgumentException("Invalid input for carrier. Please enter 'true', 'false', 't', or 'f'.");
-                            }
-
+                            boolean hasCarrier = scanner.nextBoolean();
                             vehicle = new TwoWheeler(vehicleNum, ownerName, contactNum, hasCarrier);
+                            scanner.nextLine(); // Clear buffer
                         } else {
                             throw new IllegalArgumentException("Invalid vehicle type.");
                         }
 
-                        pms.registerVehicle(vehicle);
+                        System.out.print("Enter the duration of parking in hours: ");
+                        long duration = scanner.nextLong();
+                        pms.registerVehicle(vehicle, duration);
                         break;
                     case 2:
                         pms.displaySlots();
