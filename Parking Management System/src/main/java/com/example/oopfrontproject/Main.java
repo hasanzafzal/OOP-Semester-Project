@@ -5,6 +5,10 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.fxml.FXML;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDateTime;
@@ -52,6 +56,7 @@ public class Main extends Application {
             return DriverManager.getConnection(URL);
         }
     }
+
     abstract static class Vehicle {
         private String vehicleNum;
         private String ownerName;
@@ -159,8 +164,14 @@ public class Main extends Application {
         public void setExitTime(String exitTime) {
             this.exitTime = exitTime;
         }
-        public void setDuration(int duration){this.duration = duration;}
-        public int getDuration(){return duration;}
+
+        public void setDuration(int duration) {
+            this.duration = duration;
+        }
+
+        public int getDuration() {
+            return duration;
+        }
 
         public void displayTicketDetails() {
             System.out.println("Ticket ID: " + ticketID);
@@ -230,6 +241,7 @@ public class Main extends Application {
                 e.printStackTrace();
             }
         }
+
         public void generateReport() {
             try (Connection connection = DatabaseHandler.getConnection()) {
                 String query = "SELECT COUNT(*) AS vehicleCount, SUM(duration * 10) AS revenue FROM Tickets";
@@ -245,8 +257,67 @@ public class Main extends Application {
             }
         }
 
+        public void sendTimeAlerts() {
+            try (Connection connection = DatabaseHandler.getConnection()) {
+                String query = "SELECT ticketID, entryTime, vehicleNum FROM Tickets WHERE exitTime IS NULL";
+                try (Statement stmt = connection.createStatement();
+                     ResultSet rs = stmt.executeQuery(query)) {
+
+                    while (rs.next()) {
+                        int ticketID = rs.getInt("ticketID");
+                        String entryTimeStr = rs.getString("entryTime");
+                        String vehicleNum = rs.getString("vehicleNum");
+
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        LocalDateTime entryTime = LocalDateTime.parse(entryTimeStr, formatter);
+                        LocalDateTime currentTime = LocalDateTime.now();
+
+                        long hoursParked = java.time.Duration.between(entryTime, currentTime).toHours();
+                        if (hoursParked > 2) {  // Example threshold: 2 hours
+                            System.out.println("Alert: Vehicle " + vehicleNum + " has been parked for " + hoursParked + " hours.");
+                            // Send alert, notify user (e.g., email or GUI alert)
+                            Alert alert = new Alert(AlertType.INFORMATION);
+                            alert.setTitle("Parking Alert");
+                            alert.setHeaderText("Parking Time Exceeded");
+                            alert.setContentText("Vehicle " + vehicleNum + " has been parked for " + hoursParked + " hours.");
+                            alert.showAndWait();
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
         private String getCurrentTime() {
-            return java.time.LocalDateTime.now().toString();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return LocalDateTime.now().format(formatter);
+        }
+    }
+
+    // Controller Class
+    public static class Controller {
+
+        @FXML
+        private ListView<String> slotListView; // A ListView to display available slots
+
+        @FXML
+        private void viewParkingSlots() {
+            ParkingManagementSystem system = new ParkingManagementSystem();
+            List<ParkingSlot> slots = system.getAvailableSlots();
+            List<String> slotDetails = new ArrayList<>();
+
+            for (ParkingSlot slot : slots) {
+                slotDetails.add("Slot Type: " + slot.getSlotType() + " | Occupied: " + (slot.isOccupied() ? "Yes" : "No"));
+            }
+
+            slotListView.getItems().setAll(slotDetails);
+        }
+
+        @FXML
+        private void sendTimeAlerts() {
+            ParkingManagementSystem system = new ParkingManagementSystem();
+            system.sendTimeAlerts();
         }
     }
 }

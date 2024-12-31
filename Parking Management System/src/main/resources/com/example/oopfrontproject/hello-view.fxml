@@ -2,6 +2,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
 
 <AnchorPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/16"
             fx:controller="com.example.oopfrontproject.MainController" prefHeight="600.0" prefWidth="800.0">
@@ -26,7 +27,7 @@
             <Button fx:id="registerVehicleButton" text="Register Vehicle" onAction="#handleRegisterVehicle" />
         </VBox>
 
-        <!-- Actions -->
+        <!-- Actions Section -->
         <VBox layoutX="400.0" layoutY="50.0" spacing="10.0">
             <Label text="Actions" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
             <Button fx:id="viewSlotsButton" text="View Parking Slots" onAction="#handleDisplaySlots" />
@@ -49,6 +50,12 @@
                     <TableColumn text="Status" fx:id="statusColumn" prefWidth="350.0" />
                 </columns>
             </TableView>
+        </VBox>
+
+        <!-- Parking Slot List -->
+        <VBox layoutX="50.0" layoutY="480.0" prefWidth="700.0" visible="false">
+            <Label text="Parking Slot List" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <ListView fx:id="slotListView" prefHeight="200.0" prefWidth="700.0" />
         </VBox>
     </children>
 </AnchorPane>

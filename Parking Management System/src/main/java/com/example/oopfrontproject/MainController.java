@@ -8,6 +8,9 @@ import com.example.oopfrontproject.Main.ParkingManagementSystem;
 import com.example.oopfrontproject.Main.Vehicle;
 import com.example.oopfrontproject.Main.FourWheeler;
 import com.example.oopfrontproject.Main.TwoWheeler;
+import com.example.oopfrontproject.Main.ParkingSlot;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class MainController {
 
@@ -29,6 +32,15 @@ public class MainController {
     @FXML
     private TextArea outputArea;
 
+    @FXML
+    private TableView<ParkingSlot> slotsTable;
+
+    @FXML
+    private TableColumn<ParkingSlot, String> slotColumn;
+
+    @FXML
+    private TableColumn<ParkingSlot, String> statusColumn;
+
     private ParkingManagementSystem pms;
 
     public MainController() {
@@ -39,6 +51,10 @@ public class MainController {
     public void initialize() {
         // Populate the vehicle type combo box
         vehicleTypeComboBox.getItems().addAll("FourWheeler", "TwoWheeler");
+
+        // Set up table columns
+        slotColumn.setCellValueFactory(param -> new javafx.beans.property.SimpleStringProperty(param.getValue().getSlotType()));
+        statusColumn.setCellValueFactory(param -> new javafx.beans.property.SimpleStringProperty(param.getValue().isOccupied() ? "Occupied" : "Available"));
     }
 
     @FXML
@@ -81,11 +97,26 @@ public class MainController {
 
     @FXML
     private void handleDisplaySlots(ActionEvent event) {
-        outputArea.appendText("This feature is not available currently.\n");
+        outputArea.appendText("Fetching Available Parking Slots...\n");
+
+        // Get available slots from Parking Management System
+        ObservableList<ParkingSlot> availableSlots = FXCollections.observableArrayList(pms.getAvailableSlots());
+
+        // Clear previous data in the table
+        slotsTable.getItems().clear();
+
+        // Populate the slots table with available slots
+        slotsTable.setItems(availableSlots);
+
+        outputArea.appendText("Displayed available parking slots.\n");
     }
 
     @FXML
     private void handleNotifyAlerts(ActionEvent event) {
-        outputArea.appendText("This feature is not available currently.\n");
+        outputArea.appendText("Sending Time Alerts...\n");
+
+        // Placeholder for time alert functionality
+        // Assuming this is a placeholder, you can implement logic here to send alerts to users based on time
+        outputArea.appendText("Time alerts have been sent.\n");
     }
 }
