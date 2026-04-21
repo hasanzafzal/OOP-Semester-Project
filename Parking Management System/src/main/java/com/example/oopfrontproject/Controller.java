@@ -28,10 +28,8 @@ public class Controller {
 
     public void initialize() {
         vehicleTypeComboBox.setItems(FXCollections.observableArrayList("Two Wheeler", "Four Wheeler"));
-
         slotColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSlotType()));
         statusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().isOccupied() ? "Occupied" : "Available"));
-
         refreshSlotTable();
     }
 
@@ -80,7 +78,6 @@ public class Controller {
 
     @FXML
     private void sendTimeAlerts() {
-        // Implement time alert functionality in Main.ParkingManagementSystem
         outputTextArea.appendText("Time alerts functionality is not yet implemented.\n");
         // parkingSystem.notifyTimeAlerts(); // Call the method once implemented
     }

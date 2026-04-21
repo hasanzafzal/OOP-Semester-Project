@@ -2,60 +2,173 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<?import javafx.scene.control.cell.PropertyValueFactory?>
 
-<AnchorPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/16"
-            fx:controller="com.example.oopfrontproject.MainController" prefHeight="600.0" prefWidth="800.0">
+<!--
+    hello-view.fxml
+    Controller: com.example.oopfrontproject.MainController
+    Window size: 820 × 680
+-->
+<AnchorPane
+        xmlns:fx="http://javafx.com/fxml/1"
+        xmlns="http://javafx.com/javafx/16"
+        fx:controller="com.example.oopfrontproject.MainController"
+        prefHeight="680.0"
+        prefWidth="820.0"
+        style="-fx-background-color: #f4f6f9;">
+
     <children>
-        <!-- Title -->
-        <Label text="Parking Management System" layoutX="250.0" layoutY="10.0">
-            <font>
-                <Font size="24.0" />
-            </font>
-        </Label>
 
-        <!-- Input Section -->
-        <VBox layoutX="50.0" layoutY="50.0" spacing="10.0">
-            <Label text="Register Vehicle" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-            <TextField fx:id="vehicleNumberField" promptText="Vehicle Number" />
-            <TextField fx:id="ownerNameField" promptText="Owner Name" />
-            <TextField fx:id="contactNumberField" promptText="Contact Number" />
-            <HBox spacing="10.0">
-                <ComboBox fx:id="vehicleTypeComboBox" promptText="Vehicle Type" />
+        <!-- ══════════════════════════════════════
+             TITLE BAR
+             ══════════════════════════════════════ -->
+        <Label
+                text="🅿 Parking Management System"
+                layoutX="0.0" layoutY="0.0"
+                prefWidth="820.0"
+                alignment="CENTER"
+                style="-fx-font-size: 22px;
+                   -fx-font-weight: bold;
+                   -fx-background-color: #2c3e50;
+                   -fx-text-fill: white;
+                   -fx-padding: 12 0 12 0;" />
+
+        <!-- ══════════════════════════════════════
+             LEFT PANEL – REGISTER / REMOVE
+             ══════════════════════════════════════ -->
+        <VBox layoutX="20.0" layoutY="60.0" spacing="8.0" prefWidth="320.0">
+
+            <!-- Register section -->
+            <Label text="Register Vehicle"
+                   style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+
+            <TextField fx:id="vehicleNumberField"
+                       promptText="Vehicle Number (e.g. ABC-123)"
+                       style="-fx-pref-height: 32px;" />
+            <TextField fx:id="ownerNameField"
+                       promptText="Owner Name"
+                       style="-fx-pref-height: 32px;" />
+            <TextField fx:id="contactNumberField"
+                       promptText="Contact Number"
+                       style="-fx-pref-height: 32px;" />
+
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <ComboBox fx:id="vehicleTypeComboBox"
+                          promptText="Vehicle Type"
+                          prefWidth="180.0" />
                 <CheckBox fx:id="hasCarrierCheckBox" text="Has Carrier" />
             </HBox>
-            <Button fx:id="registerVehicleButton" text="Register Vehicle" onAction="#handleRegisterVehicle" />
+
+            <Button text="✔ Register Vehicle"
+                    onAction="#handleRegisterVehicle"
+                    prefWidth="320.0"
+                    style="-fx-background-color: #27ae60;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;
+                           -fx-pref-height: 34px;
+                           -fx-cursor: hand;" />
+
+            <!-- Separator -->
+            <Separator style="-fx-padding: 4 0 4 0;" />
+
+            <!-- Remove section -->
+            <Label text="Remove Vehicle"
+                   style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+
+            <TextField fx:id="removeVehicleField"
+                       promptText="Vehicle Number to Remove"
+                       style="-fx-pref-height: 32px;" />
+            <Button text="✖ Remove Vehicle"
+                    onAction="#removeVehicle"
+                    prefWidth="320.0"
+                    style="-fx-background-color: #e74c3c;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;
+                           -fx-pref-height: 34px;
+                           -fx-cursor: hand;" />
+
         </VBox>
 
-        <!-- Actions Section -->
-        <VBox layoutX="400.0" layoutY="50.0" spacing="10.0">
-            <Label text="Actions" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-            <Button fx:id="viewSlotsButton" text="View Parking Slots" onAction="#handleDisplaySlots" />
-            <Button fx:id="generateReportButton" text="Generate Report" onAction="#handleGenerateReport" />
-            <Button fx:id="timeAlertButton" text="Send Time Alerts" onAction="#handleNotifyAlerts" />
+        <!-- ══════════════════════════════════════
+             RIGHT PANEL – ACTIONS
+             ══════════════════════════════════════ -->
+        <VBox layoutX="380.0" layoutY="60.0" spacing="10.0" prefWidth="420.0">
+
+            <Label text="Actions"
+                   style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+
+            <HBox spacing="10.0">
+                <Button text="📋 View Slots"
+                        onAction="#handleDisplaySlots"
+                        prefWidth="190.0" prefHeight="34.0"
+                        style="-fx-background-color: #2980b9;
+                               -fx-text-fill: white;
+                               -fx-font-weight: bold;
+                               -fx-cursor: hand;" />
+                <Button text="📊 Generate Report"
+                        onAction="#handleGenerateReport"
+                        prefWidth="200.0" prefHeight="34.0"
+                        style="-fx-background-color: #8e44ad;
+                               -fx-text-fill: white;
+                               -fx-font-weight: bold;
+                               -fx-cursor: hand;" />
+            </HBox>
+
+            <HBox spacing="10.0">
+                <Button text="⏰ Send Time Alerts"
+                        onAction="#handleNotifyAlerts"
+                        prefWidth="190.0" prefHeight="34.0"
+                        style="-fx-background-color: #e67e22;
+                               -fx-text-fill: white;
+                               -fx-font-weight: bold;
+                               -fx-cursor: hand;" />
+                <Button text="🗑 Clear Output"
+                        onAction="#handleClearOutput"
+                        prefWidth="200.0" prefHeight="34.0"
+                        style="-fx-background-color: #7f8c8d;
+                               -fx-text-fill: white;
+                               -fx-font-weight: bold;
+                               -fx-cursor: hand;" />
+            </HBox>
+
+            <!-- Reset button – full width, prominent -->
+            <Button text="⟳ Reset System"
+                    onAction="#handleResetSystem"
+                    prefWidth="400.0" prefHeight="38.0"
+                    style="-fx-background-color: #c0392b;
+                           -fx-text-fill: white;
+                           -fx-font-size: 14px;
+                           -fx-font-weight: bold;
+                           -fx-cursor: hand;" />
+
+            <!-- Output area -->
+            <Label text="Output Log"
+                   style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+            <TextArea fx:id="outputArea"
+                      prefHeight="210.0" prefWidth="420.0"
+                      wrapText="true" editable="false"
+                      style="-fx-font-family: monospace; -fx-font-size: 12px;" />
+
         </VBox>
 
-        <!-- Output Section -->
-        <VBox layoutX="50.0" layoutY="250.0" prefWidth="700.0" spacing="10.0">
-            <Label text="Output" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-            <TextArea fx:id="outputArea" prefHeight="200.0" prefWidth="700.0" wrapText="true" editable="false" />
-        </VBox>
+        <!-- ══════════════════════════════════════
+             BOTTOM – PARKING SLOTS TABLE
+             ══════════════════════════════════════ -->
+        <VBox layoutX="20.0" layoutY="430.0" prefWidth="780.0" spacing="6.0">
 
-        <!-- Parking Slots Table -->
-        <VBox layoutX="50.0" layoutY="480.0" prefWidth="700.0">
-            <Label text="Parking Slots" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-            <TableView fx:id="slotsTable" prefHeight="150.0" prefWidth="700.0">
+            <Label text="Parking Slots Overview"
+                   style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+
+            <TableView fx:id="slotsTable" prefHeight="210.0" prefWidth="780.0">
                 <columns>
-                    <TableColumn text="Slot" fx:id="slotColumn" prefWidth="350.0" />
-                    <TableColumn text="Status" fx:id="statusColumn" prefWidth="350.0" />
+                    <TableColumn fx:id="slotColumn"  text="Slot"   prefWidth="390.0" />
+                    <TableColumn fx:id="statusColumn" text="Status" prefWidth="390.0" />
                 </columns>
+                <placeholder>
+                    <Label text="No slots to display." />
+                </placeholder>
             </TableView>
+
         </VBox>
 
-        <!-- Parking Slot List -->
-        <VBox layoutX="50.0" layoutY="480.0" prefWidth="700.0" visible="false">
-            <Label text="Parking Slot List" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-            <ListView fx:id="slotListView" prefHeight="200.0" prefWidth="700.0" />
-        </VBox>
     </children>
 </AnchorPane>

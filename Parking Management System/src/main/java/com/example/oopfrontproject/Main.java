@@ -5,21 +5,17 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.fxml.FXML;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import java.util.ArrayList;
-import java.util.List;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("hello-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 600, 400);
+        Scene scene = new Scene(fxmlLoader.load(), 820, 680);
         stage.setTitle("Parking Management System");
         stage.setScene(scene);
         stage.show();
@@ -33,20 +29,44 @@ public class Main extends Application {
         private static final String URL = "jdbc:sqlite:parking_system.db";
 
         static {
-            try (Connection connection = DriverManager.getConnection(URL)) {
-                Statement statement = connection.createStatement();
-                statement.execute("CREATE TABLE IF NOT EXISTS Vehicles (" +
-                        "vehicleNum TEXT PRIMARY KEY, ownerName TEXT, contactNum INTEGER, vehicleType TEXT, hasCarrier BOOLEAN)");
-                statement.execute("CREATE TABLE IF NOT EXISTS ParkingSlots (" +
-                        "slotID INTEGER PRIMARY KEY AUTOINCREMENT, slotType TEXT, isOccupied BOOLEAN)");
-                statement.execute("CREATE TABLE IF NOT EXISTS Tickets (" +
-                        "ticketID INTEGER PRIMARY KEY AUTOINCREMENT, entryTime TEXT, exitTime TEXT, vehicleNum TEXT, duration INTEGER, FOREIGN KEY(vehicleNum) REFERENCES Vehicles(vehicleNum))");
+            try (Connection connection = DriverManager.getConnection(URL);
+                 Statement statement = connection.createStatement()) {
 
-                ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM ParkingSlots");
-                rs.next();
-                if (rs.getInt(1) == 0) {
-                    statement.execute("INSERT INTO ParkingSlots (slotType, isOccupied) VALUES ('Car', 0), ('Bike', 0), ('Car',0), ('Bike',0), ('Car',0)");
+                statement.execute(
+                        "CREATE TABLE IF NOT EXISTS Vehicles (" +
+                                "vehicleNum TEXT PRIMARY KEY, " +
+                                "ownerName TEXT, " +
+                                "contactNum INTEGER, " +
+                                "vehicleType TEXT, " +
+                                "hasCarrier BOOLEAN)"
+                );
+                statement.execute(
+                        "CREATE TABLE IF NOT EXISTS ParkingSlots (" +
+                                "slotID INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                                "slotType TEXT, " +
+                                "isOccupied BOOLEAN DEFAULT 0)"
+                );
+                statement.execute(
+                        "CREATE TABLE IF NOT EXISTS Tickets (" +
+                                "ticketID INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                                "entryTime TEXT, " +
+                                "exitTime TEXT, " +
+                                "vehicleNum TEXT, " +
+                                "duration INTEGER, " +
+                                "FOREIGN KEY(vehicleNum) REFERENCES Vehicles(vehicleNum))"
+                );
+
+                // Seed slots only if table is empty
+                try (ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM ParkingSlots")) {
+                    rs.next();
+                    if (rs.getInt(1) == 0) {
+                        statement.execute(
+                                "INSERT INTO ParkingSlots (slotType, isOccupied) VALUES " +
+                                        "('Car',0),('Bike',0),('Car',0),('Bike',0),('Car',0)"
+                        );
+                    }
                 }
+
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -58,140 +78,100 @@ public class Main extends Application {
     }
 
     abstract static class Vehicle {
-        private String vehicleNum;
-        private String ownerName;
-        private long contactNum;
+        private final String vehicleNum;
+        private final String ownerName;
+        private final long contactNum;
 
         public Vehicle(String vehicleNum, String ownerName, long contactNum) {
             this.vehicleNum = vehicleNum;
-            this.ownerName = ownerName;
+            this.ownerName  = ownerName;
             this.contactNum = contactNum;
         }
 
-        public String getVehicleNum() {
-            return vehicleNum;
-        }
+        public String getVehicleNum()  { return vehicleNum; }
+        public String getOwnerName()   { return ownerName; }
+        public long   getContactNum()  { return contactNum; }
 
-        public String getOwnerName() {
-            return ownerName;
-        }
+        /** Returns "Car" or "Bike" — used for slot-type matching. */
+        public abstract String getSlotType();
 
-        public long getContactNum() {
-            return contactNum;
-        }
-
-        public void displayDetails() {
-            System.out.println("Vehicle Number: " + vehicleNum);
-            System.out.println("Owner Name: " + ownerName);
-            System.out.println("Contact Number: " + contactNum);
+        public String summary() {
+            return String.format("Num: %s | Owner: %s | Contact: %d",
+                    vehicleNum, ownerName, contactNum);
         }
     }
 
     static class FourWheeler extends Vehicle {
-        private String vehicleType;
+        private final String carType;   // e.g. Sedan, SUV
 
-        public FourWheeler(String vehicleNum, String ownerName, long contactNum, String vehicleType) {
+        public FourWheeler(String vehicleNum, String ownerName, long contactNum, String carType) {
             super(vehicleNum, ownerName, contactNum);
-            this.vehicleType = vehicleType;
+            this.carType = carType;
         }
 
+        @Override public String getSlotType() { return "Car"; }
+        public String getCarType()             { return carType; }
+
         @Override
-        public void displayDetails() {
-            super.displayDetails();
-            System.out.println("Vehicle Type: 4 Wheeler (" + vehicleType + ")");
+        public String summary() {
+            return super.summary() + " | Type: 4-Wheeler (" + carType + ")";
         }
     }
 
     static class TwoWheeler extends Vehicle {
-        private boolean hasCarrier;
+        private final boolean hasCarrier;
 
         public TwoWheeler(String vehicleNum, String ownerName, long contactNum, boolean hasCarrier) {
             super(vehicleNum, ownerName, contactNum);
             this.hasCarrier = hasCarrier;
         }
 
-        public boolean hasCarrier() {
-            return hasCarrier;
-        }
+        @Override public String getSlotType() { return "Bike"; }
+        public boolean hasCarrier()            { return hasCarrier; }
 
         @Override
-        public void displayDetails() {
-            super.displayDetails();
-            System.out.println("Vehicle Type: 2 Wheeler");
-            System.out.println("Has Carrier: " + (hasCarrier ? "Yes" : "No"));
+        public String summary() {
+            return super.summary() + " | Type: 2-Wheeler | Carrier: " + (hasCarrier ? "Yes" : "No");
         }
     }
 
     static class ParkingSlot {
-        String slotType;
-        boolean isOccupied;
+        private final int    slotID;
+        private final String slotType;
+        private boolean      isOccupied;
 
-        public ParkingSlot(String slotType) {
-            this.slotType = slotType;
-            this.isOccupied = false; // Initialize to false
+        public ParkingSlot(int slotID, String slotType, boolean isOccupied) {
+            this.slotID     = slotID;
+            this.slotType   = slotType;
+            this.isOccupied = isOccupied;
         }
 
-        public String getSlotType() {
-            return slotType;
-        }
-
-        public boolean isOccupied() {
-            return isOccupied;
-        }
-
-        public void occupy() {
-            isOccupied = true;
-        }
-
-        public void vacate() {
-            isOccupied = false;
-        }
-    }
-
-    static class Ticket {
-        private int ticketID;
-        private String entryTime;
-        private String exitTime;
-        private Vehicle vehicle;
-        private int duration;
-
-        public Ticket(int ticketID, String entryTime, Vehicle vehicle) {
-            this.ticketID = ticketID;
-            this.entryTime = entryTime;
-            this.vehicle = vehicle;
-        }
-
-        public void setExitTime(String exitTime) {
-            this.exitTime = exitTime;
-        }
-
-        public void setDuration(int duration) {
-            this.duration = duration;
-        }
-
-        public int getDuration() {
-            return duration;
-        }
-
-        public void displayTicketDetails() {
-            System.out.println("Ticket ID: " + ticketID);
-            System.out.println("Entry Time: " + entryTime);
-            System.out.println("Exit Time: " + exitTime);
-            vehicle.displayDetails();
-        }
+        public int     getSlotID()    { return slotID; }
+        public String  getSlotType()  { return slotType; }
+        public boolean isOccupied()   { return isOccupied; }
+        public void    occupy()       { isOccupied = true; }
+        public void    vacate()       { isOccupied = false; }
     }
 
     static class ParkingManagementSystem {
 
+        private static final DateTimeFormatter FMT =
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        /** Returns ALL slots with their current status. */
         public List<ParkingSlot> getAvailableSlots() {
             List<ParkingSlot> slots = new ArrayList<>();
-            try (Connection connection = DatabaseHandler.getConnection();
-                 Statement statement = connection.createStatement();
-                 ResultSet resultSet = statement.executeQuery("SELECT slotID, slotType, isOccupied FROM ParkingSlots")) {
-                while (resultSet.next()) {
-                    ParkingSlot slot = new ParkingSlot(resultSet.getString("slotType"));
-                    slot.isOccupied = resultSet.getBoolean("isOccupied");
-                    slots.add(slot);
+            String sql = "SELECT slotID, slotType, isOccupied FROM ParkingSlots ORDER BY slotID";
+            try (Connection con = DatabaseHandler.getConnection();
+                 Statement  st  = con.createStatement();
+                 ResultSet  rs  = st.executeQuery(sql)) {
+
+                while (rs.next()) {
+                    slots.add(new ParkingSlot(
+                            rs.getInt("slotID"),
+                            rs.getString("slotType"),
+                            rs.getBoolean("isOccupied")
+                    ));
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -199,125 +179,245 @@ public class Main extends Application {
             return slots;
         }
 
-        public void registerVehicle(Vehicle vehicle) {
-            try (Connection connection = DatabaseHandler.getConnection()) {
-                String findSlotQuery = "SELECT slotID FROM ParkingSlots WHERE isOccupied = 0 LIMIT 1";
-                try (Statement stmt = connection.createStatement();
-                     ResultSet rs = stmt.executeQuery(findSlotQuery)) {
+        /**
+         * Registers a vehicle: finds a matching free slot, inserts vehicle + ticket.
+         * @return status message
+         */
+        public String registerVehicle(Vehicle vehicle) {
+            String slotType = vehicle.getSlotType(); // "Car" or "Bike"
 
-                    if (!rs.next()) {
-                        System.out.println("No available slots for the vehicle.");
-                        return;
-                    }
+            try (Connection con = DatabaseHandler.getConnection()) {
 
-                    int slotID = rs.getInt("slotID");
-
-                    String vehicleQuery = "INSERT INTO Vehicles (vehicleNum, ownerName, contactNum, vehicleType, hasCarrier) VALUES (?, ?, ?, ?, ?)";
-                    try (PreparedStatement vehicleStmt = connection.prepareStatement(vehicleQuery)) {
-                        vehicleStmt.setString(1, vehicle.getVehicleNum());
-                        vehicleStmt.setString(2, vehicle.getOwnerName());
-                        vehicleStmt.setLong(3, vehicle.getContactNum());
-                        vehicleStmt.setString(4, vehicle instanceof FourWheeler ? "FourWheeler" : "TwoWheeler");
-                        vehicleStmt.setBoolean(5, (vehicle instanceof TwoWheeler) ? ((TwoWheeler) vehicle).hasCarrier() : false);
-                        vehicleStmt.executeUpdate();
-                    }
-
-                    String occupySlotQuery = "UPDATE ParkingSlots SET isOccupied = 1 WHERE slotID = ?";
-                    try (PreparedStatement slotStmt = connection.prepareStatement(occupySlotQuery)) {
-                        slotStmt.setInt(1, slotID);
-                        slotStmt.executeUpdate();
-                    }
-
-                    String ticketQuery = "INSERT INTO Tickets (entryTime, vehicleNum) VALUES (?, ?)";
-                    try (PreparedStatement ticketStmt = connection.prepareStatement(ticketQuery)) {
-                        ticketStmt.setString(1, getCurrentTime());
-                        ticketStmt.setString(2, vehicle.getVehicleNum());
-                        ticketStmt.executeUpdate();
-                    }
-
-                    System.out.println("Vehicle registered successfully. Slot: " + slotID);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void generateReport() {
-            try (Connection connection = DatabaseHandler.getConnection()) {
-                String query = "SELECT COUNT(*) AS vehicleCount, SUM(duration * 10) AS revenue FROM Tickets";
-                try (Statement stmt = connection.createStatement();
-                     ResultSet rs = stmt.executeQuery(query)) {
-                    if (rs.next()) {
-                        System.out.println("Total Vehicles: " + rs.getInt("vehicleCount"));
-                        System.out.println("Total Revenue: $" + rs.getDouble("revenue"));
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void sendTimeAlerts() {
-            try (Connection connection = DatabaseHandler.getConnection()) {
-                String query = "SELECT ticketID, entryTime, vehicleNum FROM Tickets WHERE exitTime IS NULL";
-                try (Statement stmt = connection.createStatement();
-                     ResultSet rs = stmt.executeQuery(query)) {
-
-                    while (rs.next()) {
-                        int ticketID = rs.getInt("ticketID");
-                        String entryTimeStr = rs.getString("entryTime");
-                        String vehicleNum = rs.getString("vehicleNum");
-
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                        LocalDateTime entryTime = LocalDateTime.parse(entryTimeStr, formatter);
-                        LocalDateTime currentTime = LocalDateTime.now();
-
-                        long hoursParked = java.time.Duration.between(entryTime, currentTime).toHours();
-                        if (hoursParked > 2) {  // Example threshold: 2 hours
-                            System.out.println("Alert: Vehicle " + vehicleNum + " has been parked for " + hoursParked + " hours.");
-                            // Send alert, notify user (e.g., email or GUI alert)
-                            Alert alert = new Alert(AlertType.INFORMATION);
-                            alert.setTitle("Parking Alert");
-                            alert.setHeaderText("Parking Time Exceeded");
-                            alert.setContentText("Vehicle " + vehicleNum + " has been parked for " + hoursParked + " hours.");
-                            alert.showAndWait();
+                // Check duplicate
+                try (PreparedStatement chk = con.prepareStatement(
+                        "SELECT vehicleNum FROM Vehicles WHERE vehicleNum = ?")) {
+                    chk.setString(1, vehicle.getVehicleNum());
+                    try (ResultSet rs = chk.executeQuery()) {
+                        if (rs.next()) {
+                            return "ERROR: Vehicle " + vehicle.getVehicleNum() + " is already registered.";
                         }
                     }
                 }
+
+                // Find a free slot that matches the vehicle type
+                int slotID = -1;
+                try (PreparedStatement findSlot = con.prepareStatement(
+                        "SELECT slotID FROM ParkingSlots WHERE isOccupied = 0 AND slotType = ? LIMIT 1")) {
+                    findSlot.setString(1, slotType);
+                    try (ResultSet rs = findSlot.executeQuery()) {
+                        if (rs.next()) slotID = rs.getInt("slotID");
+                    }
+                }
+
+                if (slotID == -1) {
+                    return "ERROR: No available " + slotType + " slots.";
+                }
+
+                try (PreparedStatement ins = con.prepareStatement(
+                        "INSERT INTO Vehicles (vehicleNum, ownerName, contactNum, vehicleType, hasCarrier) " +
+                                "VALUES (?, ?, ?, ?, ?)")) {
+                    ins.setString(1, vehicle.getVehicleNum());
+                    ins.setString(2, vehicle.getOwnerName());
+                    ins.setLong(3, vehicle.getContactNum());
+                    ins.setString(4, vehicle instanceof FourWheeler ? "FourWheeler" : "TwoWheeler");
+                    ins.setBoolean(5, vehicle instanceof TwoWheeler && ((TwoWheeler) vehicle).hasCarrier());
+                    ins.executeUpdate();
+                }
+
+                try (PreparedStatement upd = con.prepareStatement(
+                        "UPDATE ParkingSlots SET isOccupied = 1 WHERE slotID = ?")) {
+                    upd.setInt(1, slotID);
+                    upd.executeUpdate();
+                }
+
+                try (PreparedStatement tkt = con.prepareStatement(
+                        "INSERT INTO Tickets (entryTime, vehicleNum) VALUES (?, ?)")) {
+                    tkt.setString(1, LocalDateTime.now().format(FMT));
+                    tkt.setString(2, vehicle.getVehicleNum());
+                    tkt.executeUpdate();
+                }
+
+                return "OK: Vehicle " + vehicle.getVehicleNum() +
+                        " registered in slot #" + slotID + " (" + slotType + ").";
+
             } catch (SQLException e) {
                 e.printStackTrace();
+                return "ERROR: " + e.getMessage();
             }
         }
 
-        private String getCurrentTime() {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            return LocalDateTime.now().format(formatter);
-        }
-    }
+        /**
+         * Removes a vehicle: closes its ticket and frees the correct slot.
+         * @return status message
+         */
+        public String removeVehicle(String vehicleNum) {
+            try (Connection con = DatabaseHandler.getConnection()) {
 
-    // Controller Class
-    public static class Controller {
+                int    ticketID;
+                String entryTimeStr;
+                try (PreparedStatement ps = con.prepareStatement(
+                        "SELECT ticketID, entryTime FROM Tickets " +
+                                "WHERE vehicleNum = ? AND exitTime IS NULL")) {
+                    ps.setString(1, vehicleNum);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            return "ERROR: No active ticket found for " + vehicleNum + ".";
+                        }
+                        ticketID     = rs.getInt("ticketID");
+                        entryTimeStr = rs.getString("entryTime");
+                    }
+                }
 
-        @FXML
-        private ListView<String> slotListView; // A ListView to display available slots
+                LocalDateTime entryTime = LocalDateTime.parse(entryTimeStr, FMT);
+                LocalDateTime exitTime  = LocalDateTime.now();
+                long hours = java.time.Duration.between(entryTime, exitTime).toHours();
+                int billableHours = (int) Math.max(1, hours);
 
-        @FXML
-        private void viewParkingSlots() {
-            ParkingManagementSystem system = new ParkingManagementSystem();
-            List<ParkingSlot> slots = system.getAvailableSlots();
-            List<String> slotDetails = new ArrayList<>();
+                try (PreparedStatement upd = con.prepareStatement(
+                        "UPDATE Tickets SET exitTime = ?, duration = ? WHERE ticketID = ?")) {
+                    upd.setString(1, exitTime.format(FMT));
+                    upd.setInt(2, billableHours);
+                    upd.setInt(3, ticketID);
+                    upd.executeUpdate();
+                }
 
-            for (ParkingSlot slot : slots) {
-                slotDetails.add("Slot Type: " + slot.getSlotType() + " | Occupied: " + (slot.isOccupied() ? "Yes" : "No"));
+                String vType;
+                try (PreparedStatement ps = con.prepareStatement(
+                        "SELECT vehicleType FROM Vehicles WHERE vehicleNum = ?")) {
+                    ps.setString(1, vehicleNum);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        vType = rs.next() ? rs.getString("vehicleType") : "Car";
+                    }
+                }
+                String slotType = vType.equals("TwoWheeler") ? "Bike" : "Car";
+
+                try (PreparedStatement free = con.prepareStatement(
+                        "UPDATE ParkingSlots SET isOccupied = 0 " +
+                                "WHERE slotID = (" +
+                                "  SELECT slotID FROM ParkingSlots " +
+                                "  WHERE isOccupied = 1 AND slotType = ? LIMIT 1)")) {
+                    free.setString(1, slotType);
+                    free.executeUpdate();
+                }
+
+                double fee = billableHours * 10.0;
+                return String.format(
+                        "OK: Vehicle %s removed. Duration: %d hr(s). Fee: $%.2f",
+                        vehicleNum, billableHours, fee);
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return "ERROR: " + e.getMessage();
             }
-
-            slotListView.getItems().setAll(slotDetails);
         }
 
-        @FXML
-        private void sendTimeAlerts() {
-            ParkingManagementSystem system = new ParkingManagementSystem();
-            system.sendTimeAlerts();
+        /**
+         * Generates a revenue/usage report.
+         * @return multi-line report string
+         */
+        public String generateReport() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("========== PARKING REPORT ==========\n");
+
+            try (Connection con = DatabaseHandler.getConnection();
+                 Statement  st  = con.createStatement()) {
+
+                try (ResultSet rs = st.executeQuery(
+                        "SELECT COUNT(*) AS total, " +
+                                "SUM(CASE WHEN exitTime IS NOT NULL THEN 1 ELSE 0 END) AS completed, " +
+                                "SUM(CASE WHEN exitTime IS NULL     THEN 1 ELSE 0 END) AS active " +
+                                "FROM Tickets")) {
+                    if (rs.next()) {
+                        sb.append(String.format("Total Tickets    : %d%n", rs.getInt("total")));
+                        sb.append(String.format("Active (parked)  : %d%n", rs.getInt("active")));
+                        sb.append(String.format("Completed        : %d%n", rs.getInt("completed")));
+                    }
+                }
+
+                try (ResultSet rs = st.executeQuery(
+                        "SELECT SUM(duration * 10) AS revenue FROM Tickets WHERE exitTime IS NOT NULL")) {
+                    if (rs.next()) {
+                        sb.append(String.format("Total Revenue    : $%.2f%n", rs.getDouble("revenue")));
+                    }
+                }
+
+                // Slot occupancy summary
+                try (ResultSet rs = st.executeQuery(
+                        "SELECT slotType, " +
+                                "COUNT(*) AS total, " +
+                                "SUM(isOccupied) AS occupied " +
+                                "FROM ParkingSlots GROUP BY slotType")) {
+                    sb.append("-------- Slot Summary --------\n");
+                    while (rs.next()) {
+                        int total    = rs.getInt("total");
+                        int occupied = rs.getInt("occupied");
+                        sb.append(String.format("  %-6s : %d/%d occupied%n",
+                                rs.getString("slotType"), occupied, total));
+                    }
+                }
+
+                sb.append("====================================\n");
+
+            } catch (SQLException e) {
+                sb.append("ERROR generating report: ").append(e.getMessage()).append("\n");
+            }
+            return sb.toString();
+        }
+
+        /**
+         * Checks all active tickets and returns alert messages for those
+         * parked longer than the threshold.
+         * @param thresholdHours alert if parked longer than this
+         * @return list of alert strings
+         */
+        public List<String> getTimeAlerts(int thresholdHours) {
+            List<String> alerts = new ArrayList<>();
+            String sql = "SELECT vehicleNum, entryTime FROM Tickets WHERE exitTime IS NULL";
+
+            try (Connection con = DatabaseHandler.getConnection();
+                 Statement  st  = con.createStatement();
+                 ResultSet  rs  = st.executeQuery(sql)) {
+
+                while (rs.next()) {
+                    String        vNum      = rs.getString("vehicleNum");
+                    LocalDateTime entryTime = LocalDateTime.parse(rs.getString("entryTime"), FMT);
+                    long hours = java.time.Duration.between(entryTime, LocalDateTime.now()).toHours();
+                    if (hours >= thresholdHours) {
+                        alerts.add(String.format(
+                                "ALERT: Vehicle %s has been parked for %d hour(s)!", vNum, hours));
+                    }
+                }
+            } catch (SQLException e) {
+                alerts.add("ERROR checking alerts: " + e.getMessage());
+            }
+            return alerts;
+        }
+
+        /**
+         * Resets the entire system: clears all data and re-seeds the default slots.
+         * @return status message
+         */
+        public String resetSystem() {
+            try (Connection con = DatabaseHandler.getConnection();
+                 Statement  st  = con.createStatement()) {
+
+                st.execute("DELETE FROM Tickets");
+                st.execute("DELETE FROM Vehicles");
+                st.execute("DELETE FROM ParkingSlots");
+                // Reset auto-increment counter
+                st.execute("DELETE FROM sqlite_sequence WHERE name='ParkingSlots'");
+                st.execute("DELETE FROM sqlite_sequence WHERE name='Tickets'");
+                // Re-seed default slots
+                st.execute(
+                        "INSERT INTO ParkingSlots (slotType, isOccupied) VALUES " +
+                                "('Car',0),('Bike',0),('Car',0),('Bike',0),('Car',0)"
+                );
+                return "OK: System reset. All data cleared and default slots restored.";
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return "ERROR during reset: " + e.getMessage();
+            }
         }
     }
 }

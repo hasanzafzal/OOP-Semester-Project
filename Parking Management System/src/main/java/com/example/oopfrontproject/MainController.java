@@ -1,122 +1,191 @@
 package com.example.oopfrontproject;
 
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
-
-import com.example.oopfrontproject.Main.ParkingManagementSystem;
-import com.example.oopfrontproject.Main.Vehicle;
-import com.example.oopfrontproject.Main.FourWheeler;
-import com.example.oopfrontproject.Main.TwoWheeler;
-import com.example.oopfrontproject.Main.ParkingSlot;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.beans.property.SimpleStringProperty;
+import java.util.List;
 
 public class MainController {
 
-    @FXML
-    private TextField vehicleNumberField;
+    @FXML private TextField   vehicleNumberField;
+    @FXML private TextField   ownerNameField;
+    @FXML private TextField   contactNumberField;
+    @FXML private ComboBox<String> vehicleTypeComboBox;
+    @FXML private CheckBox    hasCarrierCheckBox;
 
-    @FXML
-    private TextField ownerNameField;
+    // ── Remove field ──────────────────────────────────────
+    @FXML private TextField   removeVehicleField;
 
-    @FXML
-    private TextField contactNumberField;
+    // ── Output ────────────────────────────────────────────
+    @FXML private TextArea    outputArea;
 
-    @FXML
-    private ComboBox<String> vehicleTypeComboBox;
+    @FXML private TableView<Main.ParkingSlot>          slotsTable;
+    @FXML private TableColumn<Main.ParkingSlot, String> slotColumn;
+    @FXML private TableColumn<Main.ParkingSlot, String> statusColumn;
 
-    @FXML
-    private CheckBox hasCarrierCheckBox;
-
-    @FXML
-    private TextArea outputArea;
-
-    @FXML
-    private TableView<ParkingSlot> slotsTable;
-
-    @FXML
-    private TableColumn<ParkingSlot, String> slotColumn;
-
-    @FXML
-    private TableColumn<ParkingSlot, String> statusColumn;
-
-    private ParkingManagementSystem pms;
-
-    public MainController() {
-        pms = new ParkingManagementSystem();
-    }
+    private final Main.ParkingManagementSystem pms = new Main.ParkingManagementSystem();
 
     @FXML
     public void initialize() {
-        // Populate the vehicle type combo box
-        vehicleTypeComboBox.getItems().addAll("FourWheeler", "TwoWheeler");
+        vehicleTypeComboBox.setItems(
+                FXCollections.observableArrayList("Two Wheeler", "Four Wheeler"));
 
-        // Set up table columns
-        slotColumn.setCellValueFactory(param -> new javafx.beans.property.SimpleStringProperty(param.getValue().getSlotType()));
-        statusColumn.setCellValueFactory(param -> new javafx.beans.property.SimpleStringProperty(param.getValue().isOccupied() ? "Occupied" : "Available"));
+        slotColumn.setCellValueFactory(data -> new SimpleStringProperty(
+                "Slot #" + data.getValue().getSlotID() +
+                        " (" + data.getValue().getSlotType() + ")"));
+
+        statusColumn.setCellValueFactory(data -> new SimpleStringProperty(
+                data.getValue().isOccupied() ? "🔴 Occupied" : "🟢 Available"));
+
+        slotsTable.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(Main.ParkingSlot slot, boolean empty) {
+                super.updateItem(slot, empty);
+                if (empty || slot == null) {
+                    setStyle("");
+                } else if (slot.isOccupied()) {
+                    setStyle("-fx-background-color: #ffe0e0;");   // light red
+                } else {
+                    setStyle("-fx-background-color: #e0ffe0;");   // light green
+                }
+            }
+        });
+
+        refreshSlotTable();
     }
 
     @FXML
-    private void handleRegisterVehicle(ActionEvent event) {
+    private void handleRegisterVehicle() {
+        String vehicleNum  = vehicleNumberField.getText().trim();
+        String ownerName   = ownerNameField.getText().trim();
+        String contactStr  = contactNumberField.getText().trim();
+        String vehicleType = vehicleTypeComboBox.getValue();
+        boolean hasCarrier = hasCarrierCheckBox.isSelected();
+
+        if (vehicleNum.isEmpty() || ownerName.isEmpty() ||
+                contactStr.isEmpty()  || vehicleType == null) {
+            appendOutput("⚠ Please fill in all fields before registering.\n");
+            return;
+        }
+
+        long contactNum;
         try {
-            String vehicleNum = vehicleNumberField.getText();
-            String ownerName = ownerNameField.getText();
-            long contactNum = Long.parseLong(contactNumberField.getText());
-
-            if (vehicleNum.isEmpty() || ownerName.isEmpty()) {
-                outputArea.setText("Please fill all the fields correctly.");
-                return;
-            }
-
-            Vehicle vehicle;
-            String vehicleType = vehicleTypeComboBox.getValue();
-            boolean hasCarrier = hasCarrierCheckBox.isSelected();
-
-            if ("FourWheeler".equalsIgnoreCase(vehicleType)) {
-                vehicle = new FourWheeler(vehicleNum, ownerName, contactNum, vehicleType);
-            } else if ("TwoWheeler".equalsIgnoreCase(vehicleType)) {
-                vehicle = new TwoWheeler(vehicleNum, ownerName, contactNum, hasCarrier);
-            } else {
-                outputArea.setText("Please select a valid vehicle type.");
-                return;
-            }
-
-            pms.registerVehicle(vehicle);
-            outputArea.appendText("Vehicle Registered Successfully.\n");
+            contactNum = Long.parseLong(contactStr);
         } catch (NumberFormatException e) {
-            outputArea.setText("Please enter a valid contact number.");
+            appendOutput("⚠ Contact number must be numeric.\n");
+            return;
+        }
+
+        Main.Vehicle vehicle;
+        if ("Two Wheeler".equals(vehicleType)) {
+            vehicle = new Main.TwoWheeler(vehicleNum, ownerName, contactNum, hasCarrier);
+        } else {
+            vehicle = new Main.FourWheeler(vehicleNum, ownerName, contactNum, "Sedan");
+        }
+
+        String result = pms.registerVehicle(vehicle);
+        appendOutput(result + "\n");
+
+        if (result.startsWith("OK")) {
+            clearRegistrationFields();
+            refreshSlotTable();
         }
     }
 
     @FXML
-    private void handleGenerateReport(ActionEvent event) {
-        outputArea.appendText("Generating Report...\n");
-        pms.generateReport();
+    private void removeVehicle() {
+        String vehicleNum = removeVehicleField.getText().trim();
+        if (vehicleNum.isEmpty()) {
+            appendOutput("⚠ Enter a vehicle number to remove.\n");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm Removal");
+        confirm.setHeaderText("Remove vehicle: " + vehicleNum);
+        confirm.setContentText("This will calculate the fee and free the slot. Continue?");
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+
+        String result = pms.removeVehicle(vehicleNum);
+        appendOutput(result + "\n");
+
+        if (result.startsWith("OK")) {
+            removeVehicleField.clear();
+            refreshSlotTable();
+        }
     }
 
     @FXML
-    private void handleDisplaySlots(ActionEvent event) {
-        outputArea.appendText("Fetching Available Parking Slots...\n");
-
-        // Get available slots from Parking Management System
-        ObservableList<ParkingSlot> availableSlots = FXCollections.observableArrayList(pms.getAvailableSlots());
-
-        // Clear previous data in the table
-        slotsTable.getItems().clear();
-
-        // Populate the slots table with available slots
-        slotsTable.setItems(availableSlots);
-
-        outputArea.appendText("Displayed available parking slots.\n");
+    private void handleDisplaySlots() {
+        appendOutput("Refreshing parking slot view...\n");
+        refreshSlotTable();
     }
 
     @FXML
-    private void handleNotifyAlerts(ActionEvent event) {
-        outputArea.appendText("Sending Time Alerts...\n");
+    private void handleGenerateReport() {
+        String report = pms.generateReport();
+        appendOutput(report);
+    }
 
-        // Placeholder for time alert functionality
-        // Assuming this is a placeholder, you can implement logic here to send alerts to users based on time
-        outputArea.appendText("Time alerts have been sent.\n");
+    @FXML
+    private void handleNotifyAlerts() {
+        List<String> alerts = pms.getTimeAlerts(2); // threshold: 2 hours
+        if (alerts.isEmpty()) {
+            appendOutput("✔ No vehicles have exceeded the parking time limit.\n");
+        } else {
+            alerts.forEach(a -> {
+                appendOutput(a + "\n");
+                Alert dialog = new Alert(Alert.AlertType.WARNING);
+                dialog.setTitle("Parking Time Alert");
+                dialog.setHeaderText("Parking Time Exceeded");
+                dialog.setContentText(a);
+                dialog.showAndWait();
+            });
+        }
+    }
+
+    @FXML
+    private void handleResetSystem() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm System Reset");
+        confirm.setHeaderText("⚠ Reset Entire System");
+        confirm.setContentText(
+                "This will permanently delete ALL vehicles, tickets, and slot data,\n" +
+                        "and restore the default parking slots.\n\nAre you sure?");
+
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+
+        String result = pms.resetSystem();
+        appendOutput(result + "\n");
+        clearRegistrationFields();
+        removeVehicleField.clear();
+        refreshSlotTable();
+    }
+
+    @FXML
+    private void handleClearOutput() {
+        outputArea.clear();
+    }
+
+    private void refreshSlotTable() {
+        ObservableList<Main.ParkingSlot> slots =
+                FXCollections.observableArrayList(pms.getAvailableSlots());
+        slotsTable.setItems(slots);
+        slotsTable.refresh();
+    }
+
+    private void appendOutput(String text) {
+        outputArea.appendText(text);
+        outputArea.setScrollTop(Double.MAX_VALUE);
+    }
+
+    private void clearRegistrationFields() {
+        vehicleNumberField.clear();
+        ownerNameField.clear();
+        contactNumberField.clear();
+        vehicleTypeComboBox.setValue(null);
+        hasCarrierCheckBox.setSelected(false);
     }
 }
