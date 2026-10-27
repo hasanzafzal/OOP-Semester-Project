@@ -1,9 +1,11 @@
-# Space Saver DB — Smart Parking Management System
+# OOP Semester Project
 
 Students Name: Hasan Zahid & Waleed Ahmed Razzaqi
 Enrollment #: 01-131232-028 & 093 
 Teachers: Engr. Aleem Ahmad & Engr. Raheela Ambrin  
 Dept of SE, BUIC
+
+# Project: Space Saver DB — Smart Parking Management System
 
 Space Saver is a robust, Object-Oriented Parking Management System written in Java with a MySQL database backend. Designed to streamline parking operations, track vehicle entry and exit times, manage real-time slot availability, and handle billing calculations efficiently.
 
